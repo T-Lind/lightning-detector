@@ -1,27 +1,27 @@
-reference,quantity_used,description,manufacturer_part_or_spec
-U1,1,ESP32 Feather V2 STEMMA QT,5400
-U2,1,AS3935 Lightning Detector evaluation board,SEN-15441 / 15441
-BT1,1,"3.7V Lithium-Ion rechargeable battery, 2.5Ah",328
-BOX1,1,"Polycarbonate gray enclosure, cover included",1554R2GY / HM1811-ND
-VENT1,1,M12 breathable pressure-relief vent with nut,VENT-PS1YBK-N8001
-W1,~220 mm,"8-conductor stranded 28 AWG ribbon cable, 3M 3365/08 cut length",3M 3365/08 100; DigiKey 19-3365/08100-DS-ND
-R1–R2,2,"100 kΩ 1% 1/4 W axial metal-film resistor, Yageo MFR series",Yageo MFR-25FBF52-100K; DigiKey 100KXBK-ND
-USB1,1,"USB Type-A to USB Type-C data cable, approximately 1 m / 3 ft",Adafruit 4474
-PS1,1,"5 V 1 A USB-A port wall supply, UL listed",Adafruit 501
-PLATE1,1,138 x 138 x 2 mm notched insulating carrier,Custom insulating stock; see mechanical guide
-HW1,6,White nylon screw and stand-off assorted kit,Adafruit 3658; DigiKey 1528-2528-ND
-HW2,6,"M2.5 nylon screws, 6mm long",Included in Adafruit3658
-HW3,6,M2.5 nylon nuts,Included in Adafruit3658
-HW4,6,"M2.5 natural nylon flat washer, nominal 6 mm OD",Essentra Components MFW020A; DigiKey MFW020A-ND
-PAD1,4,Insulating floor blocks 10 x 10 x 8mm,Custom insulating stock; see mechanical guide
-TAPE1,8 small tabs,"3M VHB 5952 black double-sided acrylic foam tape, 1/2 in × 5 yd roll",3M 5952/055
-STRAP1,1,VELCRO 8 in. x 1/2 in. Multi-Color One-Wrap Straps (5-Pack),90438ACS; Home Depot Internet #202261928; Store SKU #137975
-FOAM1,battery pad,"Morezmore EVA foam sheet, bright yellow, 2 mm, 9 × 6 in, one piece",Morezmore M00215-BrightYellow
-DRY1,1,Dry-Packs 1 gram orange-indicating silica gel packet,1GR.INDICATING
-SHRINK1,~0.2m,"3M FP-301 heat-shrink tubing, black, 1/8 in ID, 4 ft length","3M FP301-1/8-48""-BLACK-25 PCS; DigiKey 3M161336-ND"
-TIE1,2,"Quad-opening adhesive cable-tie anchor, natural nylon",Würth Elektronik 530909100; DigiKey 732-12421-ND
-MOUNT1,2,Simpson Strong-Tie #8 x 1-1/4 in Phillips pan-head Type 316 stainless marine screw (15-Pack),T08J125PX-RP15; Home Depot Internet #205427357
-MOUNT2,2,#8 stainless-steel flat washer,BFirst Industrial FWSS 008; DigiKey H736-ND
-POST1,1,Wood post or suitable sheltered nonmetallic backing,Site-specific
-TIE2,4,"Small nylon cable tie, natural, 3.90 in",Panduit PLT1M-C; DigiKey 298-1020-ND
+reference,quantity_used,description,manufacturer_part_or_spec
+U1,1,ESP32 Feather V2 STEMMA QT,5400
+U2,1,AS3935 Lightning Detector evaluation board,SEN-15441 / 15441
+BT1,1,"3.7V Lithium-Ion rechargeable battery, 2.5Ah",328
+BOX1,1,"Polycarbonate gray enclosure, cover included",1554R2GY / HM1811-ND
+VENT1,1,M12 breathable pressure-relief vent with nut,VENT-PS1YBK-N8001
+W1,~220 mm,"8-conductor stranded 28 AWG ribbon cable, 3M 3365/08 cut length",3M 3365/08 100; DigiKey 19-3365/08100-DS-ND
+R1–R2,2,"100 kΩ 1% 1/4 W axial metal-film resistor, Yageo MFR series",Yageo MFR-25FBF52-100K; DigiKey 100KXBK-ND
+USB1,1,"USB Type-A to USB Type-C data cable, approximately 1 m / 3 ft",Adafruit 4474
+PS1,1,"5 V 1 A USB-A port wall supply, UL listed",Adafruit 501
+PLATE1,1,138 x 138 x 2 mm notched insulating carrier,Custom insulating stock; see mechanical guide
+HW1,6,White nylon screw and stand-off assorted kit,Adafruit 3658; DigiKey 1528-2528-ND
+HW2,6,"M2.5 nylon screws, 6mm long",Included in Adafruit3658
+HW3,6,M2.5 nylon nuts,Included in Adafruit3658
+HW4,6,"M2.5 natural nylon flat washer, nominal 6 mm OD",Essentra Components MFW020A; DigiKey MFW020A-ND
+PAD1,4,Insulating floor blocks 10 x 10 x 8mm,Custom insulating stock; see mechanical guide
+TAPE1,8 small tabs,"3M VHB 5952 black double-sided acrylic foam tape, 1/2 in × 5 yd roll",3M 5952/055
+STRAP1,1,VELCRO 8 in. x 1/2 in. Multi-Color One-Wrap Straps (5-Pack),90438ACS; Home Depot Internet #202261928; Store SKU #137975
+FOAM1,battery pad,"Morezmore EVA foam sheet, bright yellow, 2 mm, 9 × 6 in, one piece",Morezmore M00215-BrightYellow
+DRY1,1,Dry-Packs 1 gram orange-indicating silica gel packet,1GR.INDICATING
+SHRINK1,~0.2m,"3M FP-301 heat-shrink tubing, black, 1/8 in ID, 4 ft length","3M FP301-1/8-48""-BLACK-25 PCS; DigiKey 3M161336-ND"
+TIE1,2,"Quad-opening adhesive cable-tie anchor, natural nylon",Würth Elektronik 530909100; DigiKey 732-12421-ND
+MOUNT1,2,Simpson Strong-Tie #8 x 1-1/4 in Phillips pan-head Type 316 stainless marine screw (15-Pack),T08J125PX-RP15; Home Depot Internet #205427357
+MOUNT2,2,#8 stainless-steel flat washer,BFirst Industrial FWSS 008; DigiKey H736-ND
+POST1,1,Wood post or suitable sheltered nonmetallic backing,Site-specific
+TIE2,4,"Small nylon cable tie, natural, 3.90 in",Panduit PLT1M-C; DigiKey 298-1020-ND
 T06,1 bench only,10 kΩ 1% 1/4 W axial metal-film resistor for bench wake test,Yageo MFR-25FBF52-10K; DigiKey 10.0KXBK-ND
