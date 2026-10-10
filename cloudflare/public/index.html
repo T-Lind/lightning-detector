@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f4ee">
+  <meta name="description" content="Private observations and health for your local lightning detector.">
+  <title>Local Lightning · Your station</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" type="module"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="/">Local Lightning</a>
+    <div class="header-actions"><span id="connection" class="connection">Private dashboard</span><button id="signout" class="quiet" type="button" hidden>Sign out</button></div>
+  </header>
+  <main id="main" tabindex="-1">
+    <section id="login" class="login panel" aria-labelledby="login-title">
+      <h1 id="login-title">Your lightning detector</h1>
+      <p>Sign in to see observations and station health.</p>
+      <form id="login-form">
+        <label for="token">Dashboard token</label>
+        <div class="token-field"><input id="token" type="password" autocomplete="current-password" spellcheck="false" autocapitalize="none" aria-describedby="token-help login-error" required><button id="reveal-token" class="quiet" type="button" aria-controls="token" aria-pressed="false">Show</button></div>
+        <label class="remember-control"><input id="remember-browser" type="checkbox" checked aria-describedby="token-help"> Remember this browser</label>
+        <p id="token-help" class="small form-help">Save access on a browser you trust. Uncheck for tab-only access. Signing out removes the saved token.</p>
+        <button id="login-submit" class="primary" type="submit">Open dashboard</button>
+        <p id="login-error" class="form-error" role="alert"></p>
+      </form>
+    </section>
+    <div id="dashboard" hidden>
+      <div class="title-row"><h1 id="label">Lightning detector</h1><div class="refresh-group"><button id="refresh" type="button"><span id="refresh-label">Refresh</span></button><span class="small">Checks every minute while open</span></div></div>
+      <p id="error" class="error-banner" role="alert" hidden></p>
+      <section id="station-banner" class="station-banner" aria-labelledby="station-title" data-tone="neutral"><div><h2 id="station-title">Waiting for a report</h2><p id="station-description">Station status will appear here.</p></div><span id="health" class="badge">Unknown</span></section>
+      <div class="overview">
+        <section class="panel activity-panel" aria-labelledby="activity-heading">
+          <div class="section-heading"><h2 id="activity-heading">Activity</h2><span class="small">Past hour</span></div>
+          <h3 id="state" class="activity-state">Status unavailable</h3><p id="last" class="activity-caption">Waiting for station data.</p>
+          <div class="stats"><div><strong id="count10">—</strong><span>detections / 10 min</span></div><div><strong id="count60">—</strong><span>detections / hour</span></div></div>
+          <p id="activity-note" class="small">Counts reflect records received by this station.</p>
+        </section>
+        <section class="panel range-panel" aria-labelledby="range-heading">
+          <h2 id="range-heading">Estimated storm range</h2>
+          <div class="range-readout"><strong id="range">—</strong><span id="range-caption">No range available</span></div>
+          <p id="range-context" class="small">A range estimate appears after a timed lightning observation.</p>
+          <dl class="details"><div><dt>Nearest estimate</dt><dd id="nearest">—</dd></div><div><dt>Range trend</dt><dd id="trend">—</dd></div></dl>
+          <p class="small">Distance to the storm front; no direction or exact strike location.</p>
+        </section>
+      </div>
+      <section class="panel hardware-panel" aria-labelledby="hardware-heading">
+        <div class="section-heading"><h2 id="hardware-heading">Station health</h2><span id="device-id" class="small">Awaiting first report</span></div>
+        <dl class="health-grid">
+          <div><dt>Last station report</dt><dd id="report">—</dd><span id="report-time" class="small">No report received</span></div>
+          <div><dt>Estimated battery</dt><dd id="battery-percent">Unavailable</dd><span id="battery" class="battery-voltage">—</span><span class="small battery-note">Voltage-based estimate; charging affects it.</span></div>
+          <div><dt>Wi-Fi at last report</dt><dd id="rssi">—</dd><span id="wifi-quality" class="small">No reading</span></div>
+          <div><dt>Local storage</dt><dd id="storage">—</dd><span id="dropped" class="small">No queue data</span></div>
+        </dl>
+        <details class="instrument-details"><summary>About these readings</summary><div class="details-content"><p id="faults"></p><p>Routine reports arrive every 6 hours; the station is overdue after 12 hours. Refreshing this page checks the cloud, not the sleeping detector.</p><p>The voltage and battery estimate use the last reported ADC reading. The percentage uses a generic 3.7 V LiPo curve, rounded to 5% steps. It is not a measured charge level or a runtime prediction. Temperature, load, charging and ADC error affect it; USB with no battery can still produce a reading. The device cannot confirm charging or battery presence. Compare voltage with a meter for calibration.</p><p>At an indicated 3.40 V or below, recharge: the detector skips Wi-Fi to conserve power. This threshold is separate from the percentage estimate. Queue overflow counts records lost before upload.</p><p id="firmware" class="small"></p></div></details>
+      </section>
+      <section class="panel plot-panel" aria-labelledby="plot-heading">
+        <div class="section-heading"><h2 id="plot-heading">Distance over time</h2><span class="small">Past 24 hours</span></div>
+        <p class="small plot-intro">Each dot is a recorded lightning observation. Overhead appears at zero; estimates beyond 40 km appear in a separate row.</p>
+        <figure class="distance-figure"><div class="plot-scroll"><svg id="distance-plot" viewBox="0 0 980 326" role="img" aria-labelledby="distance-plot-title distance-plot-description"></svg></div><figcaption id="plot-note" class="small">Based on loaded history.</figcaption></figure>
+        <p class="small">Hover a point for its time and range, or read the observation history below.</p>
+      </section>
+      <section class="panel timeline" aria-labelledby="history-heading">
+        <div class="section-heading"><h2 id="history-heading">Observation history</h2><button id="export" type="button" disabled>Export JSON</button></div>
+        <div class="history-toolbar"><div class="filter-control"><label for="history-filter">Show</label><select id="history-filter"><option value="all">All observations</option><option value="lightning">Lightning only</option><option value="system">Station &amp; noise</option></select></div><p id="history-count" class="small" role="status">No records loaded</p></div>
+        <p id="untimed" class="small timing-note" hidden></p>
+        <div class="table-scroll"><table><caption class="sr-only">Loaded observations, newest sequence first. Times use your browser’s time zone.</caption><thead><tr><th scope="col">Time · local</th><th scope="col">Observation</th><th scope="col">Range</th><th scope="col">Energy · unitless</th><th scope="col">Voltage</th></tr></thead><tbody id="history"></tbody></table></div>
+        <div class="history-footer"><button id="older" type="button">Load older records</button><span id="history-note" class="small">Stored history is retained for 30 days.</span></div>
+        <p id="history-error" class="form-error" role="alert" hidden></p>
+      </section>
+      <aside class="interpretation"><p>Follow official weather alerts and shelter when you hear thunder. No detections does not mean it is safe outdoors.</p><p class="small">Phone and browser notifications are not enabled.</p><p id="browser-access" class="small"></p></aside>
+    </div>
+    <noscript><p class="error-banner">JavaScript is needed to open this private dashboard.</p></noscript>
+  </main>
+  <footer class="site-footer"><span>Local Lightning</span><span>AS3935 / ESP32 Feather</span></footer>
+</body>
+</html>

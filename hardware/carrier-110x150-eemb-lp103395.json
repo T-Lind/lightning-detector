@@ -1,0 +1,161 @@
+{
+  "units": "mm",
+  "variant": "110x150 screw-mounted, EEMB LP103395",
+  "plate": {
+    "width": 150,
+    "height": 110,
+    "thickness": 2,
+    "corner_notches": 0
+  },
+  "origin": "upper-left of plate, X right, Y down; component side facing viewer",
+  "case_origin": [
+    5,
+    25
+  ],
+  "plate_bottom_z_from_outside_back": 9,
+  "case_mounting": {
+    "type": "four internal M3 brass inserts",
+    "pattern": [
+      138,
+      96
+    ],
+    "clearance_diameter": 3.2,
+    "centers": [
+      [
+        6,
+        7
+      ],
+      [
+        144,
+        7
+      ],
+      [
+        6,
+        103
+      ],
+      [
+        144,
+        103
+      ]
+    ],
+    "basis": "Hammond 1554R drawing and original STEP optional-panel screws"
+  },
+  "boards": {
+    "sensor": {
+      "origin": [
+        12,
+        12
+      ],
+      "size": [
+        25.4,
+        25.4
+      ],
+      "rotation": 270,
+      "holes": [
+        [
+          14.54,
+          14.54
+        ],
+        [
+          14.54,
+          34.86
+        ]
+      ]
+    },
+    "feather": {
+      "origin": [
+        115,
+        36
+      ],
+      "size": [
+        22.86,
+        50.8
+      ],
+      "rotation": 90,
+      "holes": [
+        [
+          117.54,
+          38.54
+        ],
+        [
+          135.32,
+          38.54
+        ],
+        [
+          117.54,
+          84.26
+        ],
+        [
+          135.32,
+          84.26
+        ]
+      ]
+    },
+    "clearance_diameter": 2.8,
+    "standoff_height": 6
+  },
+  "battery": {
+    "model": "EEMB LP103395",
+    "manufacturer_size": [
+      33.5,
+      97,
+      10.3
+    ],
+    "footprint": [
+      57.25,
+      6.5,
+      33.5,
+      97
+    ],
+    "basis": "https://www.eemb.com/product-208",
+    "note": "Check actual protected pack, taped edges and lead exit; outline is a placement reference."
+  },
+  "foam": {
+    "material": "closed-cell nonconductive EVA",
+    "thickness": 2,
+    "outline": [
+      55,
+      5,
+      38,
+      100
+    ]
+  },
+  "velcro": {
+    "slot_rectangles": [
+      [
+        49.5,
+        23.5,
+        3,
+        15
+      ],
+      [
+        95.5,
+        23.5,
+        3,
+        15
+      ],
+      [
+        49.5,
+        71.5,
+        3,
+        15
+      ],
+      [
+        95.5,
+        71.5,
+        3,
+        15
+      ]
+    ],
+    "strap_count": 2,
+    "maximum_nominal_width": 12.7,
+    "note": "Two pairs, top and bottom; route under plate and over battery without compression."
+  },
+  "sources": [
+    "https://www.hammfg.com/files/parts/pdf/1554R2GY.pdf",
+    "https://www.eemb.com/product-208",
+    "hardware/3d/source/1554R.stp",
+    "hardware/reference/README.md"
+  ],
+  "status": "Print-scale verified; check physical hole fit, fastener engagement, wiring and lid clearance before assembly."
+}

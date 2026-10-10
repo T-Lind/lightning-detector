@@ -1,0 +1,39 @@
+# Local secrets and deployment identity
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+firmware/include/secrets.h
+firmware/include/tls_ca.h
+cloudflare/wrangler.jsonc
+*.pem
+*.key
+# Installed runtimes, generated state and firmware images
+**/node_modules/
+**/.wrangler/
+**/.pio/
+.pio-core/
+.venv*/
+__pycache__/
+*.pyc
+*.bin
+*.elf
+*.log
+tmp/
+dist/
+output/
+verification/
+worker-dry-run*/
+# Downloaded enclosure source and assemblies incorporating it stay local.
+hardware/3d/source/
+hardware/3d/assembly.*
+hardware/3d/model-data.json
+hardware/3d/fit-report.json
+hardware/3d/viewer.html
+hardware/3d/assembly-preview.png
+hardware/3d/THREE-LICENSE.txt
+# Local reference downloads; preserve only explicitly licensed board CAD in Git.
+hardware/reference/*.pdf
+hardware/reference/*.png
