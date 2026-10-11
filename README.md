@@ -121,6 +121,10 @@ The prototype has passed USB bench checks for sensor register readback, RC calib
 
 Real lightning sensitivity, range accuracy, capture completeness, final enclosure fit/sealing and measured battery lifetime still require physical and field testing. The AS3935 does not offer a full event FIFO; closely spaced events or activity during host processing can be missed or coalesced. Fault/overdue states and untimed observations remain explicit in the dashboard. Range/energy values are estimates and raw sensor data, respectively.
 
+## Sensor expansion
+
+The [low power sensor expansion plan](docs/sensor-expansion.md) compares enclosure temperature/humidity, a battery gauge, pressure and external weather probes, with power schedules, sealing constraints and implementation checks. A [printable three-page overview](docs/sensor-expansion.pdf) is also available. These additions are proposed; the current firmware and dashboard do not implement them.
+
 ## Repository guide
 
 | Path | Contents |
