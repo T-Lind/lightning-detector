@@ -59,10 +59,17 @@
         <details class="instrument-details"><summary>About these readings</summary><div class="details-content"><p id="faults"></p><p>Routine reports arrive every 6 hours; the station is overdue after 12 hours. Refreshing this page checks the cloud, not the sleeping detector.</p><p>The voltage and battery estimate use the last reported ADC reading. The percentage uses a generic 3.7 V LiPo curve, rounded to 5% steps. It is not a measured charge level or a runtime prediction. Temperature, load, charging and ADC error affect it; USB with no battery can still produce a reading. The device cannot confirm charging or battery presence. Compare voltage with a meter for calibration.</p><p>At an indicated 3.40 V or below, recharge: the detector skips Wi-Fi to conserve power. This threshold is separate from the percentage estimate. Queue overflow counts records lost before upload.</p><p id="firmware" class="small"></p></div></details>
       </section>
       <section class="panel plot-panel" aria-labelledby="plot-heading">
-        <div class="section-heading"><h2 id="plot-heading">Distance over time</h2><span class="small">Past 24 hours</span></div>
-        <p class="small plot-intro">Each dot is a recorded lightning observation. Overhead appears at zero; estimates beyond 40 km appear in a separate row.</p>
+        <div class="section-heading plot-heading"><h2 id="plot-heading">Distance over time</h2><div class="filter-control"><label for="plot-period">Period</label><select id="plot-period"><option value="24">Past 24 hours</option><option value="168">Past 7 days</option></select></div></div>
+        <p class="small plot-intro">Filled circles: lightning observations. Hollow diamonds: range updates, which are revised estimates rather than new detections. Overhead appears at zero; beyond 40 km has its own row.</p>
         <figure class="distance-figure"><div class="plot-scroll"><svg id="distance-plot" viewBox="0 0 980 326" role="img" aria-labelledby="distance-plot-title distance-plot-description"></svg></div><figcaption id="plot-note" class="small">Based on loaded history.</figcaption></figure>
-        <p class="small">Hover a point for its time and range, or read the observation history below.</p>
+        <p id="plot-inspection" class="small">Hover, tap or focus a marker for its time and range.</p>
+        <p id="plot-error" class="form-error" role="alert" hidden></p>
+      </section>
+      <section class="panel plot-panel" aria-labelledby="weekly-heading">
+        <div class="section-heading"><h2 id="weekly-heading">Weekly activity</h2><span class="small">Past 7 days</span></div>
+        <p class="small plot-intro">Recorded observations per 24-hour interval. Dark bars: lightning; pale bars: range updates. Zero records do not confirm the station was online or that conditions were safe.</p>
+        <figure class="distance-figure"><div class="plot-scroll"><svg id="weekly-plot" role="img" viewBox="0 0 980 224" aria-labelledby="weekly-title weekly-description"></svg></div><figcaption id="weekly-note" class="small">Loading stored activity…</figcaption></figure>
+        <details><summary>View weekly counts and exact intervals</summary><div class="table-scroll"><table><caption class="sr-only">Seven consecutive 24-hour intervals, with local start and end times. Nearest range includes lightning observations only.</caption><thead><tr><th scope="col">24-hour interval · local</th><th scope="col">Lightning</th><th scope="col">Range updates</th><th scope="col">Nearest lightning range</th></tr></thead><tbody id="weekly-counts"></tbody></table></div></details>
       </section>
       <section class="panel timeline" aria-labelledby="history-heading">
         <div class="section-heading"><h2 id="history-heading">Observation history</h2><button id="export" type="button" disabled>Export JSON</button></div>

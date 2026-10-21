@@ -10,7 +10,7 @@ This repository contains the source and build instructions for making your own s
 - Sends a health heartbeat every six hours and captured observations when activity occurs.
 - Buffers up to 128 observations in a checksummed flash queue during network outages and retries later.
 - Uses verified HTTPS and HMAC-signed ingestion, with a separate dashboard read token.
-- Shows a 24-hour distance scatter plot, searchable event history, and JSON export in a cream/white dashboard.
+- Shows 24-hour and seven-day range plots, a weekly activity summary, event history, and JSON export in a cream/white dashboard. Filled circles mark lightning observations; hollow diamonds mark range revisions, which do not count as new detections. Charts use all stored records in their period, independently of table pagination.
 - Remembers dashboard access in a trusted browser, with tab-only access and explicit sign-out available.
 
 One sensor provides a statistical range estimate, **not a compass bearing or exact strike location**. This is a hobby instrument, not a certified lightning warning system. A quiet or offline detector does not establish that it is safe outdoors.

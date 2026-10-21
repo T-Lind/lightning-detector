@@ -64,7 +64,12 @@ dd { margin: 0; font-weight: 500; }
 .plot-intro { margin-top: 10px; }
 .distance-figure { margin: 16px 0 8px; }
 .plot-scroll { overflow-x: auto; }
-#distance-plot { width: 100%; display: block; }
+#distance-plot, #weekly-plot { width: 100%; display: block; }
+.plot-update { fill: #fff; stroke: #84531b; stroke-width: 2; cursor: pointer; }
+.plot-update:hover, .plot-update:focus { fill: #f3e6d4; stroke-width: 3; }
+.weekly-lightning { fill: #315844; }
+.weekly-update { fill: #ddd1bc; stroke: #84531b; stroke-width: 1; }
+.plot-point, .weekly-lightning, .weekly-update { cursor: pointer; }
 .plot-grid { stroke: #d0d2c8; stroke-width: 1; }
 .plot-beyond { stroke-dasharray: 4 4; }
 .plot-label { fill: #60645c; font-size: 12px; }
@@ -148,6 +153,8 @@ th:last-child, td:last-child { text-align: right; padding-right: 0; }
   .health-grid dd { font-size: 22px; }
   #device-id { max-width: 120px; font-size: 10px; }
   .history-toolbar { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .plot-heading { flex-wrap: wrap; }
+  #weekly-plot { min-width: 560px; }
   .timeline .section-heading { align-items: flex-start; }
   .timeline #export { font-size: 11px; padding: 8px 10px; flex-shrink: 0; }
   table, tbody, tr, td { display: block; width: 100%; }

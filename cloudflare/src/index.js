@@ -1,4 +1,5 @@
 import {validateBatch, eventCanonical, detectionTime, summarize} from './model.js';
+import {readTrends} from './trends.js';
 const enc=new TextEncoder();
 const json=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{
   'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',
@@ -90,6 +91,11 @@ export default {
         const token=request.headers.get('Authorization')?.replace(/^Bearer /,'');
         if(!await tokenMatches(token,env.READ_TOKEN)) return json({error:'Dashboard token required'},401);
         if(request.method!=='GET') return json({error:'Method not allowed'},405);
+        if(url.pathname==='/api/trends') {
+          const hours=Number(url.searchParams.get('hours')??24);
+          if(![24,168].includes(hours)) return json({error:'Choose 24 or 168 hours'},400);
+          return json(await readTrends(env.DB,env.DEVICE_ID,now,hours));
+        }
         const device=await env.DB.prepare('SELECT * FROM devices WHERE device_id=?').bind(env.DEVICE_ID).first();
         if(url.pathname==='/api/status') {
           const {results}=await env.DB.prepare(`SELECT * FROM events WHERE device_id=? AND

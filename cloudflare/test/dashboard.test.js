@@ -106,11 +106,26 @@ test('distance plot uses detection time only, separates beyond-range readings an
   const event = (seq, time, range, type = 'lightning') => ({ seq, detected_at: time, received_at: now, distance_raw: range, type });
   const data = distancePlotData([event(1, now - 2, 8), event(2, now - 5, 1), event(3, now - 3, 63),
     event(4, null, 8), event(5, now - 86401, 8), event(6, now + 1, 8), event(7, now, 2), event(8, now, 8, 'noise')], now);
-  assert.deepEqual(data.points, [{ seq: 2, time: now - 5, distance: 0 }, { seq: 1, time: now - 2, distance: 8 }]);
-  assert.deepEqual(data.beyond, [{ seq: 3, time: now - 3, distance: 63 }]);
+  assert.deepEqual(data.points.map(({seq, time, distance}) => ({seq, time, distance})), [{ seq: 2, time: now - 5, distance: 0 }, { seq: 1, time: now - 2, distance: 8 }]);
+  assert.deepEqual(data.beyond.map(({seq, time, distance}) => ({seq, time, distance})), [{ seq: 3, time: now - 3, distance: 63 }]);
   assert.equal(data.untimed, 1);
   assert.equal(data.missingRange, 1);
   assert.equal(distancePlotData([], now).points.length, 0);
+});
+
+test('range revisions are plotted distinctly and seven-day view includes older ranges without inflating lightning counts', () => {
+  const now = 2000000;
+  const events = [
+    { seq: 4677, type: 'range_change', detected_at: now - 18000, distance_raw: 63 },
+    { seq: 4676, type: 'range_change', detected_at: now - 19000, distance_raw: 20 },
+    { seq: 1, type: 'lightning', detected_at: now - 3 * 86400, distance_raw: 1 }
+  ];
+  const day = distancePlotData(events, now);
+  assert.equal(day.points.length, 1); assert.equal(day.beyond.length, 1);
+  assert.equal(day.points[0].type, 'range_change');
+  const week = distancePlotData(events, now, 168);
+  assert.equal(week.points.length, 2); assert.equal(week.points[0].distance, 0);
+  assert.equal(week.points.filter(point => point.type === 'lightning').length, 1);
 });
 test('a response arriving after sign-out cannot reopen the dashboard', async () => {
   let resolve;

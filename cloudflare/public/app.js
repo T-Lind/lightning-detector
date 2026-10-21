@@ -1,6 +1,6 @@
 import { HISTORY_LIMIT, formatRange, age, voltage, estimatedBatteryPercent, wifiQuality, mergeEvents, filterEvents, observationTime, EVENT_LABELS, stationView } from './presentation.js';
 import { DashboardClient, AuthenticationError, SupersededRequest, ServiceError } from './dashboard-client.js';
-import { renderDistancePlot } from './distance-plot.js';
+import { renderDistancePlot, renderWeeklyActivity } from './trends-plot.js';
 
 const $ = id => document.getElementById(id);
 let storage, persistentStorage;
@@ -10,6 +10,7 @@ const client = new DashboardClient({ storage, persistentStorage });
 let current = null, rows = [], checkedAt = null, stale = false;
 let refreshing = false, loadingHistory = false, historyStarted = false;
 let historyCursor = 4294967296, hasOlder = true, visibleCount = 20;
+let trends = null, trendRequest = 0;
 
 const fullDate = timestamp => timestamp ? new Date(timestamp * 1000).toLocaleString(undefined,
   { dateStyle: 'medium', timeStyle: 'short' }) : 'No report received';
@@ -31,6 +32,9 @@ function refreshControls() {
 function logout({ focus = true, forget = true } = {}) {
   client.clear({ forget });
   current = null; rows = []; checkedAt = null; stale = false;
+  trends = null; trendRequest++;
+  $('distance-plot').replaceChildren(); $('weekly-plot').replaceChildren(); $('weekly-counts').replaceChildren();
+  $('plot-period').value = '24'; $('plot-error').hidden = true;
   refreshing = false; loadingHistory = false; historyStarted = false;
   historyCursor = 4294967296; hasOlder = true; visibleCount = 20;
   $('token').value = ''; $('token').type = 'password';
@@ -106,7 +110,6 @@ function renderStation() {
 }
 
 function renderTable() {
-  if (current) renderDistancePlot($('distance-plot'), $('plot-note'), rows, current.now);
   const body = $('history'), matches = matchingRows(), shown = matches.slice(0, visibleCount);
   body.replaceChildren();
   for (const event of shown) {
@@ -163,6 +166,42 @@ function renderTable() {
     : '30-day stored history · Export includes all loaded records.');
 }
 
+function renderPlots() {
+  if (!trends) return;
+  if (trends.hours === Number($('plot-period').value))
+    renderDistancePlot($('distance-plot'), $('plot-note'), trends, trends.hours);
+  renderWeeklyActivity($('weekly-plot'), $('weekly-counts'), trends.days);
+  setText('weekly-note', 'All stored, timed lightning and range-update records over seven consecutive 24-hour intervals, ending ' + fullDate(trends.now) + '. Times are local; these are rolling intervals, not calendar days.');
+}
+
+async function loadTrends() {
+  if (!client.token) return;
+  const request = ++trendRequest, hours = Number($('plot-period').value);
+  const revision = client.revision;
+  $('plot-error').hidden = true;
+  if (!trends || trends.hours !== hours) {
+    $('distance-plot').replaceChildren(); setText('plot-note', 'Loading stored range observations…');
+    setText('plot-inspection', 'Hover, tap or focus a marker for its time and range.');
+  }
+  $('distance-plot').setAttribute('aria-busy', 'true');
+  try {
+    const result = await client.request('/api/trends?hours=' + hours);
+    if (request !== trendRequest) return;
+    if (!result || result.hours !== hours || !Number.isFinite(result.now) ||
+        !Array.isArray(result.ranges) || !Array.isArray(result.days) || result.days.length !== 7)
+      throw new ServiceError('Charts could not be read. Try Refresh.');
+    trends = result; renderPlots();
+  } catch (error) {
+    if (request !== trendRequest || error instanceof SupersededRequest || handleAuth(error)) return;
+    setText('plot-error', error.message + (trends ? ' Charts were last checked ' + fullDate(trends.now) + '.' : ' Try Refresh.'));
+    $('plot-error').hidden = false;
+    if (!trends || trends.hours !== hours) setText('plot-note', 'Chart unavailable. Try Refresh.');
+    setText('weekly-note', trends ? 'Cached weekly activity, last checked ' + fullDate(trends.now) + '. Refresh to retry.' : 'Weekly activity unavailable. Refresh to retry.');
+  } finally {
+    if (request === trendRequest && revision === client.revision) $('distance-plot').setAttribute('aria-busy', 'false');
+  }
+}
+
 async function loadOlder() {
   if (!client.token || loadingHistory || !hasOlder || rows.length >= HISTORY_LIMIT) return;
   const revision = client.revision;
@@ -199,6 +238,7 @@ async function refresh({ focus = false } = {}) {
     $('error').hidden = true; $('login-error').textContent = '';
     $('login').hidden = true; $('dashboard').hidden = false; $('signout').hidden = false;
     renderStation(); renderTable();
+    void loadTrends();
     if (focus) $('main').focus();
     if (!historyStarted) { historyStarted = true; void loadOlder(); }
   } catch (error) {
@@ -233,6 +273,7 @@ $('reveal-token').addEventListener('click', () => {
 $('signout').addEventListener('click', () => { logout(); document.title = 'Local Lightning · Your station'; });
 $('refresh').addEventListener('click', () => void refresh());
 $('history-filter').addEventListener('change', () => { visibleCount = 20; renderTable(); });
+$('plot-period').addEventListener('change', () => void loadTrends());
 $('older').addEventListener('click', async () => {
   if (matchingRows().length > visibleCount) { visibleCount += 20; renderTable(); return; }
   await loadOlder();
@@ -249,7 +290,7 @@ $('export').addEventListener('click', () => {
 });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) void refresh(); });
 window.addEventListener('resize', () => {
-  if (current) renderDistancePlot($('distance-plot'), $('plot-note'), rows, current.now);
+  renderPlots();
 });
 window.addEventListener('storage', event => {
   if (event.storageArea === persistentStorage && client.persistence === 'browser' &&
