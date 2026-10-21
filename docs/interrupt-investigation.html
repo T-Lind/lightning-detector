@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Range-update investigation and deferred firmware checks</title>
+<style>body{margin:0;background:#f6f4ee;color:#262923;font:16px/1.65 system-ui,sans-serif}main{max-width:850px;margin:36px auto;padding:32px;background:white;border:1px solid #d0d2c8}h1{font-size:30px;line-height:1.2}h2{font-size:21px;margin-top:30px}a{color:#315844}code{background:#f0f0eb;padding:2px 5px}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border-bottom:1px solid #d0d2c8;text-align:left;vertical-align:top;padding:10px}small{color:#60645c} @media(max-width:600px){main{margin:0;padding:22px;border:0}table{font-size:12px}}</style></head>
+<body><main>
+<small>Technical investigation · October 21, 2026</small>
+<h1>Range updates: what is known and what still needs checking</h1>
+<p><strong>The dashboard change is independent of firmware.</strong> Weekly bars now count recorded lightning observations only. Range updates are hidden from the distance chart and default history view. They remain available through the chart’s Sensor diagnostics option, history filters and JSON export. Existing records are preserved and are not relabeled as lightning.</p>
+<h2>What the records show</h2>
+<p>Field records include distance estimates appearing seconds after routine station uploads, often followed by an out-of-range update roughly 17 minutes later. Some updates have no preceding recorded lightning event. This association makes activity during wake-up or radio operation a useful investigation target. It does not establish whether the initiating signal was real lightning, electrical interference, or a mishandled interrupt.</p>
+<p>The AS3935 documentation describes reason code zero as an estimate revision when old events are purged. That explains why legitimate updates can occur without a new strike, but does not prove the cause of every record in this deployment. The weekly chart is therefore an observation count, not a count of independently verified physical strikes.</p>
+<h2>Findings in the source</h2>
+<table><thead><tr><th>Finding</th><th>Meaning</th></tr></thead><tbody>
+<tr><td>Fallback classification</td><td>The previous reader treated any reason without recognized lightning/noise/disturber bits as a range update. Reserved or invalid values could receive that label. However, valid distances were read only for zero or lightning codes: this fallback alone does not explain the stored updates with valid distances.</td></tr>
+<tr><td>Long service gaps</td><td>Wi-Fi association and NTP waits could each take up to eight seconds without servicing the sensor. TLS/HTTP operations also block. SparkFun’s driver comments describe a limited interrupt-reading window, so delayed reads are a plausible contributor, not a confirmed diagnosis.</td></tr>
+<tr><td>Missing historical diagnostics</td><td>Existing cloud records do not retain raw interrupt codes, wake causes, service gaps or acquisition phase. Historical classifications cannot reliably be reconstructed or promoted to lightning detections.</td></tr>
+</tbody></table>
+<h2>Prepared firmware 1.0.4</h2>
+<p><strong>Prepared and build-tested; hardware acceptance is pending.</strong> Updating the website does not install this firmware. No OTA path is implemented.</p>
+<ul><li>Recognizes only documented interrupt codes: zero (range revision), one (noise), four (disturber), and eight (lightning). Invalid/reserved values increase the existing rejected counter instead of becoming observations.</li>
+<li>Polls the sensor during Wi-Fi association and NTP waits, with a bounded number of captures per connection attempt. This reduces those blind intervals but does not eliminate blocking during TLS/HTTP.</li>
+<li>Prints a serial diagnostic for each serviced interrupt: raw reason, raw range, acquisition phase, time since boot, interval since the previous sensor poll, and wake cause. These diagnostics are serial output; they are not a new durable cloud telemetry stream.</li>
+<li>Preserves the event structure, queue format, sequence reservations, endpoint schema and sensor thresholds. It does not suppress listening during Wi-Fi or infer a strike from a zero reason.</li></ul>
+<p>The interrupt classifier has an exhaustive host test over all 256 input bytes. Dashboard regression tests check that range updates cannot increase weekly bars, their scale, or default chart counts.</p>
+<h2>Next hardware session</h2>
+<ol><li>Back up the existing application and queued data before testing. Flash the application only when authorized; do not run <code>uploadfs</code>, erase NVS or reset the device identity for an ordinary upgrade. Retain the individual sensor’s measured tuning value.</li>
+<li>Capture serial logs from a routine heartbeat and an interrupt wake. Compare <code>phase</code>, <code>raw</code>, <code>poll_gap_ms</code>, <code>boot_ms</code> and <code>wake</code>. A zero reason remains ambiguous if the read was delayed.</li>
+<li>Use controlled runs to compare radio enabled/disabled while keeping the other acquisition behavior constant, and test awake versus sleep/wake behavior separately. Compare upload timing with new sensor activity. Do not declare every event near an upload false solely from timing.</li>
+<li>If radio coupling is reproduced, inspect physical separation, harness routing, power integrity and final antenna tuning before choosing a hardware remedy. Do not simply mask the sensor while transmitting: that would also lose real observations.</li>
+<li>Confirm real interrupt classification and wake capture, queue persistence, bounded retries, sensor/storage health and battery current before accepting the prepared firmware for unattended operation.</li></ol>
+<h2>Sources</h2>
+<p><a href="https://cdn.sparkfun.com/assets/learn_tutorials/9/2/1/AS3935_Datasheet_EN_v2.pdf">AS3935 datasheet</a>, statistical distance estimation and interrupt management, pages 33–34; <a href="https://github.com/sparkfun/SparkFun_AS3935_Lightning_Detector_Arduino_Library/blob/v1.4.9/src/SparkFun_AS3935.cpp">SparkFun driver v1.4.9</a>, interrupt reader and timing comments. Driver comments are implementation guidance; a controlled bench check is still needed to establish behavior on this station.</p>
+</main></body></html>

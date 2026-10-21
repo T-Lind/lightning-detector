@@ -62,14 +62,16 @@ dd { margin: 0; font-weight: 500; }
 .hardware-panel, .timeline { margin-top: 20px; }
 .plot-panel { margin-top: 20px; }
 .plot-intro { margin-top: 10px; }
+.chart-diagnostics { margin-top: 10px; }
+.diagnostic-control { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.diagnostic-control input { min-height: 0; width: 18px; height: 18px; accent-color: var(--accent); }
 .distance-figure { margin: 16px 0 8px; }
 .plot-scroll { overflow-x: auto; }
 #distance-plot, #weekly-plot { width: 100%; display: block; }
 .plot-update { fill: #fff; stroke: #84531b; stroke-width: 2; cursor: pointer; }
 .plot-update:hover, .plot-update:focus { fill: #f3e6d4; stroke-width: 3; }
 .weekly-lightning { fill: #315844; }
-.weekly-update { fill: #ddd1bc; stroke: #84531b; stroke-width: 1; }
-.plot-point, .weekly-lightning, .weekly-update { cursor: pointer; }
+.plot-point, .weekly-lightning { cursor: pointer; }
 .plot-grid { stroke: #d0d2c8; stroke-width: 1; }
 .plot-beyond { stroke-dasharray: 4 4; }
 .plot-label { fill: #60645c; font-size: 12px; }

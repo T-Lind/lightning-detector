@@ -40,7 +40,7 @@ function logout({ focus = true, forget = true } = {}) {
   $('token').value = ''; $('token').type = 'password';
   $('reveal-token').textContent = 'Show'; $('reveal-token').setAttribute('aria-pressed', 'false');
   $('login-error').textContent = ''; $('error').hidden = true; $('history-error').hidden = true;
-  $('history-filter').value = 'all';
+  $('history-filter').value = 'overview'; $('show-range-updates').checked = false;
   $('login').hidden = false; $('dashboard').hidden = true; $('signout').hidden = true;
   $('connection').textContent = 'Private dashboard'; $('connection').dataset.tone = 'neutral';
   $('dashboard').dataset.stale = 'false';
@@ -169,9 +169,10 @@ function renderTable() {
 function renderPlots() {
   if (!trends) return;
   if (trends.hours === Number($('plot-period').value))
-    renderDistancePlot($('distance-plot'), $('plot-note'), trends, trends.hours);
+    renderDistancePlot($('distance-plot'), $('plot-note'), trends, trends.hours, $('show-range-updates').checked);
   renderWeeklyActivity($('weekly-plot'), $('weekly-counts'), trends.days);
-  setText('weekly-note', 'All stored, timed lightning and range-update records over seven consecutive 24-hour intervals, ending ' + fullDate(trends.now) + '. Times are local; these are rolling intervals, not calendar days.');
+  const total = trends.days.reduce((sum, day) => sum + day.lightning, 0);
+  setText('weekly-note', total + ' recorded lightning observations over seven consecutive 24-hour intervals, ending ' + fullDate(trends.now) + '. Range updates are excluded. Times are local; these are rolling intervals, not calendar days.');
 }
 
 async function loadTrends() {
@@ -274,6 +275,10 @@ $('signout').addEventListener('click', () => { logout(); document.title = 'Local
 $('refresh').addEventListener('click', () => void refresh());
 $('history-filter').addEventListener('change', () => { visibleCount = 20; renderTable(); });
 $('plot-period').addEventListener('change', () => void loadTrends());
+$('show-range-updates').addEventListener('change', () => {
+  setText('plot-inspection', 'Hover, tap or focus a marker for its time and range.');
+  renderPlots();
+});
 $('older').addEventListener('click', async () => {
   if (matchingRows().length > visibleCount) { visibleCount += 20; renderTable(); return; }
   await loadOlder();

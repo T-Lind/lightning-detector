@@ -15,6 +15,10 @@ jobs:
           python-version: '3.11'
       - run: npm ci --prefix cloudflare
       - run: npm test --prefix cloudflare
+      - name: Interrupt classifier regression
+        run: |
+          g++ -std=c++11 -Ifirmware/include firmware/test/interrupt_reason.cpp -o /tmp/interrupt-reason-test
+          /tmp/interrupt-reason-test
       - run: python tools/check_links.py
       - run: python tools/check_fit.py
       - run: python tools/check_board_fasteners.py

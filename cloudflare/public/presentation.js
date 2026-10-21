@@ -52,6 +52,7 @@ export function mergeEvents(existing, incoming, limit = HISTORY_LIMIT) {
 
 export function filterEvents(events, filter) {
   return events.filter(event => filter === 'lightning' ? event.type === 'lightning'
+    : filter === 'overview' ? event.type !== 'range_change'
     : filter === 'system' ? event.type !== 'lightning' : true);
 }
 

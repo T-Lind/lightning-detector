@@ -10,15 +10,15 @@ function element(tag, attrs = {}, text) {
 const dateTime = value => new Date(value * 1000).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 const rangeLabel = value => value === 63 ? 'Beyond 40 km' : value === 0 || value === 1 ? 'Overhead' : value + ' km';
 
-export function renderDistancePlot(svg, note, trends, hours = 24) {
+export function renderDistancePlot(svg, note, trends, hours = 24, includeRangeUpdates = false) {
   const events = trends.ranges.map(row => ({ ...row, detected_at: (row.first_at + row.last_at) / 2 }));
-  const data = distancePlotData(events, trends.now, hours);
+  const data = distancePlotData(events, trends.now, hours, includeRangeUpdates);
   const all = [...data.points, ...data.beyond];
   const total = all.reduce((sum, point) => sum + point.count, 0);
   const lightning = all.filter(point => point.type === 'lightning').reduce((sum, point) => sum + point.count, 0);
   svg.replaceChildren();
   svg.append(element('title', { id: 'distance-plot-title' }, `Recorded range over the past ${hours === 24 ? '24 hours' : '7 days'}`),
-    element('desc', { id: 'distance-plot-description' }, `${lightning} lightning observations and ${total - lightning} range updates with valid times and ranges. Filled circles are lightning; hollow diamonds are range updates, which are not new detections. Overhead is zero; beyond 40 km has its own row. Nearby records of the same type and range are grouped.`));
+    element('desc', { id: 'distance-plot-description' }, `${lightning} recorded lightning observations with valid times and ranges. ${includeRangeUpdates ? (total - lightning) + ' diagnostic range updates are also shown as hollow diamonds; these are not new detections and their cause is under investigation.' : 'Range updates are hidden.'} Overhead is zero; beyond 40 km has its own row. Nearby records of the same type and range are grouped.`));
   const width = Math.max(250, svg.clientWidth || 980);
   svg.setAttribute('viewBox', `0 0 ${width} 326`);
   const left = 68, right = width - 14, top = 82, bottom = 258;
@@ -52,18 +52,18 @@ export function renderDistancePlot(svg, note, trends, hours = 24) {
     marker.addEventListener('focus', inspect); marker.addEventListener('mouseenter', inspect);
     marker.addEventListener('click', inspect); svg.append(marker);
   }
-  if (!total) svg.append(element('text', { x: (left + right) / 2, y: 167, 'text-anchor': 'middle', class: 'plot-empty' }, width < 600 ? 'No timed ranges recorded' : 'No timed range observations recorded for this period'));
-  note.textContent = `${lightning} lightning observations · ${total - lightning} range updates. All stored records in this period are included; the table’s loaded rows do not limit this chart. Same-type, same-range records within ${trends.bucket_seconds === 300 ? '5 minutes' : 'an hour'} share a marker.${data.missingRange ? ' ' + data.missingRange + ' range groups have no valid range.' : ''}${trends.untimed ? ' ' + trends.untimed + ' records received without event times are excluded.' : ''}`;
+  if (!total) svg.append(element('text', { x: (left + right) / 2, y: 167, 'text-anchor': 'middle', class: 'plot-empty' }, includeRangeUpdates ? 'No timed ranges recorded' : width < 600 ? 'No timed lightning recorded' : 'No timed lightning observations recorded for this period'));
+  note.textContent = `${lightning} recorded lightning observations. ${includeRangeUpdates ? (total - lightning) + ' diagnostic range updates shown; these do not count as lightning.' : 'Range updates are hidden by default.'} All stored records of the selected types in this period are included; table pagination does not limit this chart. Same-type, same-range records within ${trends.bucket_seconds === 300 ? '5 minutes' : 'an hour'} share a marker.${data.missingRange ? ' ' + data.missingRange + ' range groups have no valid range.' : ''}${trends.untimed ? ' ' + trends.untimed + ' lightning or range-update records received without event times are excluded.' : ''}`;
 }
 
 export function renderWeeklyActivity(svg, body, days) {
   svg.replaceChildren(); body.replaceChildren();
   const total = key => days.reduce((sum, day) => sum + day[key], 0);
   svg.append(element('title', { id: 'weekly-title' }, 'Recorded activity over seven days'),
-    element('desc', { id: 'weekly-description' }, `${total('lightning')} lightning observations and ${total('range_change')} range updates in seven consecutive 24-hour intervals. A zero count does not confirm the station was online. Exact intervals and counts are in the table below.`));
+    element('desc', { id: 'weekly-description' }, `${total('lightning')} recorded lightning observations in seven consecutive 24-hour intervals. Range updates are excluded. A zero count does not confirm the station was online. Exact intervals and counts are in the table below.`));
   const width = Math.max(250, svg.clientWidth || 980), left = 44, right = width - 12, top = 28, bottom = 178;
   svg.setAttribute('viewBox', `0 0 ${width} 224`);
-  const maximum = Math.max(1, ...days.map(day => day.lightning + day.range_change));
+  const maximum = Math.max(1, ...days.map(day => day.lightning));
   const step = (right - left) / 7, barWidth = step * .6;
   for (const value of [...new Set([0, Math.ceil(maximum / 2), maximum])]) {
     const yy = bottom - value / maximum * (bottom - top);
@@ -72,21 +72,19 @@ export function renderWeeklyActivity(svg, body, days) {
   }
   days.forEach((day, i) => {
     const xx = left + step * i + (step - barWidth) / 2;
-    const strikeHeight = day.lightning / maximum * (bottom - top), updateHeight = day.range_change / maximum * (bottom - top);
-    for (const [key, height, yy, cls] of [['lightning', strikeHeight, bottom - strikeHeight, 'weekly-lightning'],
-      ['range_change', updateHeight, bottom - strikeHeight - updateHeight, 'weekly-update']]) {
-      if (!height) continue;
-      const rect = element('rect', { x: xx, y: yy, width: barWidth, height, class: cls, tabindex: 0 });
-      const label = `${dateTime(day.start)} – ${dateTime(day.end)} · ${day[key]} ${key === 'lightning' ? 'lightning observations' : 'range updates'}`;
+    const height = day.lightning / maximum * (bottom - top);
+    if (height) {
+      const rect = element('rect', { x: xx, y: bottom - height, width: barWidth, height, class: 'weekly-lightning', tabindex: 0 });
+      const label = `${dateTime(day.start)} – ${dateTime(day.end)} · ${day.lightning} recorded lightning observations`;
       rect.append(element('title', {}, label)); rect.setAttribute('aria-label', label); svg.append(rect);
     }
     svg.append(element('text', { x: xx + barWidth / 2, y: 201, 'text-anchor': 'middle', class: 'plot-label' },
       new Date((day.start + day.end) / 2 * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })));
     const tr = document.createElement('tr');
-    [dateTime(day.start) + ' – ' + dateTime(day.end), day.lightning, day.range_change,
+    [dateTime(day.start) + ' – ' + dateTime(day.end), day.lightning,
       day.nearest === null ? '—' : rangeLabel(day.nearest)].forEach((value, index) => {
       const td = document.createElement('td'); td.textContent = value;
-      td.dataset.label = ['24-hour interval · local', 'Lightning', 'Range updates', 'Nearest lightning range'][index]; tr.append(td);
+      td.dataset.label = ['24-hour interval · local', 'Lightning', 'Nearest lightning range'][index]; tr.append(td);
     });
     body.append(tr);
   });

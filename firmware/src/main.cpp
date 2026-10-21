@@ -14,6 +14,7 @@
 #include <time.h>
 #include <algorithm>
 #include "config.h"
+#include "interrupt_reason.h"
 #if __has_include("secrets.h")
 #include "secrets.h"
 #else
@@ -50,6 +51,16 @@ RTC_DATA_ATTR uint32_t seqEnd = 0, nextSeq = 0;
 int activeSlot = -1;
 bool storageOK = false, sensorOK = false;
 uint32_t started;
+bool serialReady = false;
+uint32_t lastSensorPoll = 0;
+uint8_t networkCaptures = 0;
+struct InterruptDiagnostic {
+  bool present = false;
+  uint8_t reason = 0, distance = 255;
+  uint32_t at = 0, serviceGap = 0;
+  int wake = 0;
+  const char* phase = "boot";
+} lastInterrupt;
 const char* queuePath[] = {"/queue0.bin", "/queue1.bin"};
 
 int64_t epoch() { return static_cast<int64_t>(time(nullptr)); }
@@ -129,18 +140,46 @@ void append(Event e) {
 }
 // This is the only routine reading register 0x03 during normal operation.
 // Read BEFORE LittleFS, Preferences, NTP, Wi-Fi, or diagnostics.
-bool readPending(Event &e) {
+void printInterruptDiagnostic() {
+  if(!serialReady || !lastInterrupt.present) return;
+  Serial.printf("IRQ phase=%s raw=0x%02X range=%u boot_ms=%lu poll_gap_ms=%lu wake=%d\n",
+    lastInterrupt.phase,lastInterrupt.reason,lastInterrupt.distance,
+    static_cast<unsigned long>(lastInterrupt.at),static_cast<unsigned long>(lastInterrupt.serviceGap),lastInterrupt.wake);
+}
+bool readPending(Event &e, const char* phase = "awake") {
+  uint32_t now=millis(), gap=now-lastSensorPoll;
+  lastSensorPoll=now;
   if(digitalRead(cfg::IRQ)!=HIGH) return false;
   delay(3); // >=2ms after observed IRQ; also covers awake-time interrupts.
   uint8_t reason=sensor.readInterruptReg();
-  e=capture(reason&8?LIGHTNING_EVENT:reason&1?NOISE_EVENT:reason&4?DISTURBER:RANGE_CHANGE);
+  auto decoded=classifyInterrupt(reason);
+  lastInterrupt.present=true; lastInterrupt.reason=reason; lastInterrupt.distance=255;
+  lastInterrupt.at=millis(); lastInterrupt.serviceGap=gap;
+  lastInterrupt.wake=esp_sleep_get_wakeup_cause(); lastInterrupt.phase=phase;
+  if(decoded==SensorInterrupt::Unknown) {
+    ++rejected; printInterruptDiagnostic();
+    return false; // Reading cleared IRQ; do not fabricate an observation.
+  }
+  e=capture(decoded==SensorInterrupt::Lightning?LIGHTNING_EVENT:
+    decoded==SensorInterrupt::Noise?NOISE_EVENT:
+    decoded==SensorInterrupt::Disturber?DISTURBER:RANGE_CHANGE);
   if(reason==0 || reason&8) {
     uint8_t raw=sensor.distanceToStorm();
     const uint8_t valid[]={1,5,6,8,10,12,14,17,20,24,27,31,34,37,40,63};
     for(auto distance:valid) if(raw==distance) e.distance=raw;
+    lastInterrupt.distance=raw;
   }
   if(reason&8) e.energy=sensor.lightningEnergy(); // 21-bit register field, unitless.
+  printInterruptDiagnostic();
   return true;
+}
+void pollDuringNetwork(const char* phase) {
+  // These waits used to leave IRQ unserviced for up to eight seconds. Keep
+  // reading while Wi-Fi associates / NTP waits, with bounded flash work.
+  // TLS/HTTP calls still block: poll_gap_ms exposes that remaining limitation.
+  if(!sensorOK || networkCaptures>=cfg::BATCH_SIZE) return;
+  Event e{};
+  if(readPending(e,phase)) { ++networkCaptures; if(storageOK) append(e); }
 }
 bool configureSensor() {
   // beginSPI() returns true without probing hardware. Verify actual register readback.
@@ -174,9 +213,10 @@ bool configuredNetwork() {
 }
 bool connectNetwork() {
   if(!configuredNetwork()) { Serial.println("Network disabled: configure secrets and TLS root."); return false; }
+  networkCaptures=0;
   WiFi.persistent(false); WiFi.mode(WIFI_STA); WiFi.begin(WIFI_SSID,WIFI_PASSWORD);
   uint32_t t=millis();
-  while(WiFi.status()!=WL_CONNECTED && millis()-t<cfg::WIFI_TIMEOUT_MS) delay(20);
+  while(WiFi.status()!=WL_CONNECTED && millis()-t<cfg::WIFI_TIMEOUT_MS) { pollDuringNetwork("wifi-association"); delay(20); }
   if(WiFi.status()!=WL_CONNECTED) { Serial.printf("Wi-Fi association failed: status=%d\n",WiFi.status()); return false; }
   Serial.printf("Wi-Fi connected: IP=%s RSSI=%ddBm\n",WiFi.localIP().toString().c_str(),WiFi.RSSI());
   // Wait for a fresh sample: a plausible RTC clock can still have drifted by minutes.
@@ -185,6 +225,7 @@ bool connectNetwork() {
   configTime(0,0,"time.cloudflare.com","pool.ntp.org");
   t=millis(); bool synced=false;
   while(millis()-t<cfg::NTP_TIMEOUT_MS) {
+      pollDuringNetwork("ntp-wait");
     if(sntp_get_sync_status()==SNTP_SYNC_STATUS_COMPLETED) { synced=true; break; }
     delay(20);
   }
@@ -269,8 +310,8 @@ void setup() {
   SPI.begin(SCK,MISO,MOSI,cfg::CS); sensor.beginSPI(cfg::CS,cfg::SPI_HZ,SPI);
   // Only capture before configuration when a previous successful setup survived sleep.
   // An absent sensor's floating SPI input must never manufacture observations.
-  Event early{}; bool hadEarly=configured && readPending(early);
-  Serial.begin(115200);
+  Event early{}; bool hadEarly=configured && readPending(early,"wake-before-network");
+  Serial.begin(115200); serialReady=true; printInterruptDiagnostic();
   bool cold=magic!=0x4C445231 || esp_sleep_get_wakeup_cause()==ESP_SLEEP_WAKEUP_UNDEFINED;
   if(cold) { magic=0x4C445231; configured=false; nextHeartbeat=nextUpload=0; rejected=0; fastNoiseWakes=0; nextSeq=seqEnd=0; }
   sensorOK=configured;
@@ -311,13 +352,13 @@ void setup() {
       if(!validClock() || nextHeartbeat<1767225600) nextHeartbeat=epoch()+cfg::HEARTBEAT_S;
       while(count && millis()-started<cfg::MAX_AWAKE_MS) {
         if(!uploadOneBatch()) { success=false; break; } success=true;
-        Event e{}; if(sensorOK && readPending(e) && storageOK) append(e);
+        Event e{}; if(sensorOK && readPending(e,"after-http") && storageOK) append(e);
       }
     }
     nextUpload=epoch()+(success?cfg::MIN_UPLOAD_S:cfg::RETRY_S);
   }
   WiFi.disconnect(true); WiFi.mode(WIFI_OFF); delay(20);
-  Event late{}; if(sensorOK && readPending(late) && storageOK) append(late);
+  Event late{}; if(sensorOK && readPending(late,"radio-off") && storageOK) append(late);
   bool backoff=digitalRead(cfg::IRQ)==HIGH || fastNoiseWakes>=3 || !sensorOK;
   uint32_t wait=cfg::HEARTBEAT_S;
   int64_t now=epoch();

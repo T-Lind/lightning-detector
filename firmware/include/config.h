@@ -17,5 +17,5 @@ constexpr uint32_t MAX_AWAKE_MS = 25000;
 constexpr uint16_t QUEUE_CAPACITY = 128, BATCH_SIZE = 16;
 constexpr uint16_t LOW_BATTERY_MV = 3400;
 constexpr float BATTERY_CAL = 1.0f; // Adjust against a multimeter.
-constexpr char VERSION[] = "1.0.3";
+constexpr char VERSION[] = "1.0.4"; // Build-tested interrupt diagnostics; hardware acceptance pending.
 }

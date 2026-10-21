@@ -120,12 +120,16 @@ test('range revisions are plotted distinctly and seven-day view includes older r
     { seq: 4676, type: 'range_change', detected_at: now - 19000, distance_raw: 20 },
     { seq: 1, type: 'lightning', detected_at: now - 3 * 86400, distance_raw: 1 }
   ];
-  const day = distancePlotData(events, now);
+  const hidden = distancePlotData(events, now);
+  assert.equal(hidden.points.length + hidden.beyond.length, 0);
+  const day = distancePlotData(events, now, 24, true);
   assert.equal(day.points.length, 1); assert.equal(day.beyond.length, 1);
   assert.equal(day.points[0].type, 'range_change');
-  const week = distancePlotData(events, now, 168);
+  const week = distancePlotData(events, now, 168, true);
   assert.equal(week.points.length, 2); assert.equal(week.points[0].distance, 0);
   assert.equal(week.points.filter(point => point.type === 'lightning').length, 1);
+  assert.deepEqual(filterEvents(events, 'overview').map(event => event.seq), [1]);
+  assert.equal(filterEvents(events, 'all').length, 3);
 });
 test('a response arriving after sign-out cannot reopen the dashboard', async () => {
   let resolve;
